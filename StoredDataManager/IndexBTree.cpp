@@ -1,5 +1,7 @@
 #include "IndexBTree.h"
 
+using namespace std;
+
 BTreeNode::BTreeNode(bool isLeaf) {
     leaf = isLeaf;
 }
@@ -22,11 +24,11 @@ void IndexBTree::destroyTree(BTreeNode* node) {
     }
 }
 
-long long IndexBTree::search(const std::string& key) {
+long long IndexBTree::search(const string& key) {
     return searchNode(root, key);
 }
 
-long long IndexBTree::searchNode(BTreeNode* node, const std::string& key) {
+long long IndexBTree::searchNode(BTreeNode* node, const string& key) {
     if (node == nullptr) return -1;
     int i = 0;
     while (i < node->keys.size() && key > node->keys[i]) i++;
@@ -35,21 +37,21 @@ long long IndexBTree::searchNode(BTreeNode* node, const std::string& key) {
     return searchNode(node->children[i], key);
 }
 
-bool IndexBTree::insert(const std::string& key, size_t offset) {
+bool IndexBTree::insert(const string& key, size_t offset) {
     if (search(key) != -1) return false;
-    
+
     if (root == nullptr) {
         root = new BTreeNode(true);
         root->keys.push_back(key);
         root->offsets.push_back(offset);
         return true;
     }
-    
+
     if (root->keys.size() == 2 * t - 1) {
         BTreeNode* s = new BTreeNode(false);
         s->children.push_back(root);
         splitChild(s, 0, root);
-        
+
         int i = 0;
         if (s->keys[0] < key) i++;
         insertNonFull(s->children[i], key, offset);
@@ -60,25 +62,25 @@ bool IndexBTree::insert(const std::string& key, size_t offset) {
     return true;
 }
 
-void IndexBTree::insertNonFull(BTreeNode* node, const std::string& key, size_t offset) {
+void IndexBTree::insertNonFull(BTreeNode* node, const string& key, size_t offset) {
     int i = node->keys.size() - 1;
-    
+
     if (node->leaf) {
         node->keys.push_back("");
         node->offsets.push_back(0);
-        
+
         while (i >= 0 && node->keys[i] > key) {
             node->keys[i + 1] = node->keys[i];
             node->offsets[i + 1] = node->offsets[i];
             i--;
         }
-        
+
         node->keys[i + 1] = key;
         node->offsets[i + 1] = offset;
     } else {
         while (i >= 0 && node->keys[i] > key) i--;
         i++;
-        
+
         if (node->children[i]->keys.size() == 2 * t - 1) {
             splitChild(node, i, node->children[i]);
             if (node->keys[i] < key) i++;
@@ -89,18 +91,18 @@ void IndexBTree::insertNonFull(BTreeNode* node, const std::string& key, size_t o
 
 void IndexBTree::splitChild(BTreeNode* parent, int i, BTreeNode* child) {
     BTreeNode* z = new BTreeNode(child->leaf);
-    
+
     for (int j = 0; j < t - 1; j++) {
         z->keys.push_back(child->keys[j + t]);
         z->offsets.push_back(child->offsets[j + t]);
     }
-    
+
     if (!child->leaf) {
         for (int j = 0; j < t; j++) {
             z->children.push_back(child->children[j + t]);
         }
     }
-    
+
     child->keys.resize(t - 1);
     child->offsets.resize(t - 1);
     if (!child->leaf) child->children.resize(t);
@@ -110,10 +112,10 @@ void IndexBTree::splitChild(BTreeNode* parent, int i, BTreeNode* child) {
     parent->offsets.insert(parent->offsets.begin() + i, child->offsets[t - 1]);
 }
 
-void IndexBTree::remove(const std::string& key) {
+void IndexBTree::remove(const string& key) {
     if (!root) return;
     removeNode(root, key);
-    
+
     if (root->keys.empty()) {
         BTreeNode* tmp = root;
         if (root->leaf) {
@@ -125,15 +127,15 @@ void IndexBTree::remove(const std::string& key) {
     }
 }
 
-int IndexBTree::findKey(BTreeNode* node, const std::string& key) {
+int IndexBTree::findKey(BTreeNode* node, const string& key) {
     int idx = 0;
     while (idx < node->keys.size() && node->keys[idx] < key) ++idx;
     return idx;
 }
 
-void IndexBTree::removeNode(BTreeNode* node, const std::string& key) {
+void IndexBTree::removeNode(BTreeNode* node, const string& key) {
     int idx = findKey(node, key);
-    
+
     if (idx < node->keys.size() && node->keys[idx] == key) {
         if (node->leaf) {
             removeFromLeaf(node, idx);
@@ -142,13 +144,13 @@ void IndexBTree::removeNode(BTreeNode* node, const std::string& key) {
         }
     } else {
         if (node->leaf) return;
-        
+
         bool flag = (idx == node->keys.size());
-        
+
         if (node->children[idx]->keys.size() < t) {
             fill(node, idx);
         }
-        
+
         if (flag && idx > node->keys.size()) {
             removeNode(node->children[idx - 1], key);
         } else {
@@ -163,31 +165,31 @@ void IndexBTree::removeFromLeaf(BTreeNode* node, int idx) {
 }
 
 void IndexBTree::removeFromNonLeaf(BTreeNode* node, int idx) {
-    std::string k = node->keys[idx];
-    
+    string k = node->keys[idx];
+
     if (node->children[idx]->keys.size() >= t) {
-        std::string predKey;
+        string predKey;
         size_t predOff;
         getPredecessor(node, idx, predKey, predOff);
         node->keys[idx] = predKey;
         node->offsets[idx] = predOff;
         removeNode(node->children[idx], predKey);
-    } 
+    }
     else if (node->children[idx + 1]->keys.size() >= t) {
-        std::string succKey;
+        string succKey;
         size_t succOff;
         getSuccessor(node, idx, succKey, succOff);
         node->keys[idx] = succKey;
         node->offsets[idx] = succOff;
         removeNode(node->children[idx + 1], succKey);
-    } 
+    }
     else {
         merge(node, idx);
         removeNode(node->children[idx], k);
     }
 }
 
-void IndexBTree::getPredecessor(BTreeNode* node, int idx, std::string& key, size_t& offset) {
+void IndexBTree::getPredecessor(BTreeNode* node, int idx, string& key, size_t& offset) {
     BTreeNode* cur = node->children[idx];
     while (!cur->leaf) {
         cur = cur->children.back();
@@ -196,7 +198,7 @@ void IndexBTree::getPredecessor(BTreeNode* node, int idx, std::string& key, size
     offset = cur->offsets.back();
 }
 
-void IndexBTree::getSuccessor(BTreeNode* node, int idx, std::string& key, size_t& offset) {
+void IndexBTree::getSuccessor(BTreeNode* node, int idx, string& key, size_t& offset) {
     BTreeNode* cur = node->children[idx + 1];
     while (!cur->leaf) {
         cur = cur->children.front();

@@ -2,7 +2,9 @@
 #include <fstream>
 #include <filesystem>
 
-namespace fs = std::filesystem;
+using namespace std;
+
+namespace fs = filesystem;
 
 StorageManager::StorageManager() {
     encryptionKey = "LlaveTinySQL";
@@ -17,38 +19,38 @@ void StorageManager::applyCipher(char* data, size_t size) {
     }
 }
 
-std::string StorageManager::getTableFilePath(const std::string& dbName, const std::string& tableName) {
+string StorageManager::getTableFilePath(const string& dbName, const string& tableName) {
     return dbName + "/" + tableName + ".bin";
 }
 
-bool StorageManager::createDatabase(const std::string& dbName) {
+bool StorageManager::createDatabase(const string& dbName) {
     if (!fs::exists(dbName)) {
         return fs::create_directory(dbName);
     }
     return false;
 }
 
-bool StorageManager::createTable(const std::string& dbName, const std::string& tableName) {
-    std::string path = getTableFilePath(dbName, tableName);
+bool StorageManager::createTable(const string& dbName, const string& tableName) {
+    string path = getTableFilePath(dbName, tableName);
     if (!fs::exists(path)) {
-        std::ofstream file(path, std::ios::binary);
+        ofstream file(path, ios::binary);
         file.close();
         return true;
     }
     return false;
 }
 
-bool StorageManager::dropTable(const std::string& dbName, const std::string& tableName) {
-    std::string path = getTableFilePath(dbName, tableName);
+bool StorageManager::dropTable(const string& dbName, const string& tableName) {
+    string path = getTableFilePath(dbName, tableName);
     if (fs::exists(path)) {
         return fs::remove(path);
     }
     return false;
 }
 
-bool StorageManager::insertRecord(const std::string& dbName, const std::string& tableName, const char* recordData, size_t size) {
-    std::string path = getTableFilePath(dbName, tableName);
-    std::ofstream file(path, std::ios::binary | std::ios::app);
+bool StorageManager::insertRecord(const string& dbName, const string& tableName, const char* recordData, size_t size) {
+    string path = getTableFilePath(dbName, tableName);
+    ofstream file(path, ios::binary | ios::app);
     if (!file.is_open()) return false;
 
     char* dataToSave = new char[size];
@@ -64,11 +66,11 @@ bool StorageManager::insertRecord(const std::string& dbName, const std::string& 
     return true;
 }
 
-std::vector<Record> StorageManager::readAllRecords(const std::string& dbName, const std::string& tableName) {
-    std::vector<Record> recordsList;
-    std::string path = getTableFilePath(dbName, tableName);
+vector<Record> StorageManager::readAllRecords(const string& dbName, const string& tableName) {
+    vector<Record> recordsList;
+    string path = getTableFilePath(dbName, tableName);
 
-    std::ifstream file(path, std::ios::binary);
+    ifstream file(path, ios::binary);
     if (!file.is_open()) return recordsList;
 
     while (file.peek() != EOF) {
