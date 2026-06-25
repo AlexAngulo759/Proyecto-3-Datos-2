@@ -25,8 +25,22 @@ public:
     bool createTable(const std::string& dbName, const std::string& tableName);
     bool dropTable(const std::string& dbName, const std::string& tableName);
 
-    bool insertRecord(const std::string& dbName, const std::string& tableName, const char* recordData, size_t size);
-    std::vector<Record> readAllRecords(const std::string& dbName, const std::string& tableName);
+    std::vector<std::vector<std::string>> readAllRecords(
+    const std::string& dbName,
+    const std::string& tableName
+    ); //mod de readallrecords
+    //sebas
+    bool insertRecord(
+    const std::string& dbName,
+    const std::string& tableName,
+    const char* recordData,
+    size_t size
+);
+    bool overwriteRecords(
+    const std::string& dbName,
+    const std::string& tableName,
+    const std::vector<std::vector<std::string>>& records
+    );
 };
 
 #endif

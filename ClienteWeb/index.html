@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TinySQL Engine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="background-glow"></div>
+
+    <div class="app-container">
+
+        <header>
+            <h1>TinySQL Engine</h1>
+            <p>Binary Database Management System</p>
+        </header>
+
+        <div class="editor-container">
+            <div class="editor-header">
+                SQL Console
+            </div>
+
+            <textarea 
+                id="queryInput"
+                placeholder="Write SQL query here..."
+            ></textarea>
+
+            <button id="executeBtn">
+                Execute Query
+            </button>
+        </div>
+
+        <div class="status-container">
+            <div class="status-card success-card">
+                <h3>Status</h3>
+                <p id="message">Waiting...</p>
+            </div>
+
+            <div class="status-card time-card">
+                <h3>Execution Time</h3>
+                <p id="executionTime">0 ms</p>
+            </div>
+        </div>
+
+        <div class="results-container">
+            <div class="results-header">
+                Query Results
+            </div>
+
+            <table id="resultTable"></table>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>

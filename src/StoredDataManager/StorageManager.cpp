@@ -4,7 +4,7 @@
 
 using namespace std;
 
-namespace fs = filesystem;
+namespace fs = std::filesystem;
 
 StorageManager::StorageManager() {
     encryptionKey = "LlaveTinySQL";
@@ -66,29 +66,93 @@ bool StorageManager::insertRecord(const string& dbName, const string& tableName,
     return true;
 }
 
-vector<Record> StorageManager::readAllRecords(const string& dbName, const string& tableName) {
-    vector<Record> recordsList;
+vector<vector<string>> StorageManager::readAllRecords(
+    const string& dbName,
+    const string& tableName
+) {
+    vector<vector<string>> recordsList;
     string path = getTableFilePath(dbName, tableName);
 
     ifstream file(path, ios::binary);
     if (!file.is_open()) return recordsList;
 
     while (file.peek() != EOF) {
-        Record rec;
-        rec.isDeleted = false;
+        size_t size;
 
-        if (!file.read(reinterpret_cast<char*>(&rec.size), sizeof(size_t))) {
+        if (!file.read(reinterpret_cast<char*>(&size), sizeof(size_t))) {
             break;
         }
 
-        rec.data = new char[rec.size];
-        file.read(rec.data, rec.size);
+        char* buffer = new char[size];
+        file.read(buffer, size);
 
-        applyCipher(rec.data, rec.size);
+        applyCipher(buffer, size);
 
-        recordsList.push_back(rec);
+        string recordData(buffer, size);
+
+        delete[] buffer;
+
+        vector<string> parsedRecord;
+        string token = "";
+
+        for (char c : recordData) {
+            if (c == '|') {
+                parsedRecord.push_back(token);
+                token = "";
+            } else {
+                token += c;
+            }
+        }
+
+        parsedRecord.push_back(token);
+
+        recordsList.push_back(parsedRecord);
     }
 
     file.close();
     return recordsList;
+}
+
+bool StorageManager::overwriteRecords(
+    const string& dbName,
+    const string& tableName,
+    const vector<vector<string>>& records
+) {
+    string path = getTableFilePath(dbName, tableName);
+
+    ofstream file(path, ios::binary | ios::trunc);
+
+    if (!file.is_open()) {
+        return false;
+    }
+
+    for (const auto& record : records) {
+        string serialized = "";
+
+        for (size_t i = 0; i < record.size(); i++) {
+            serialized += record[i];
+
+            if (i < record.size() - 1) {
+                serialized += "|";
+            }
+        }
+
+        char* dataToSave = new char[serialized.size()];
+
+        for (size_t i = 0; i < serialized.size(); i++) {
+            dataToSave[i] = serialized[i];
+        }
+
+        applyCipher(dataToSave, serialized.size());
+
+        size_t size = serialized.size();
+
+        file.write(reinterpret_cast<const char*>(&size), sizeof(size_t));
+        file.write(dataToSave, size);
+
+        delete[] dataToSave;
+    }
+
+    file.close();
+    return true;
 }
