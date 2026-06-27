@@ -70,10 +70,14 @@ QueryResult QueryProcessor::execute(const string& query) {
     else if (normalized.find("CREATE INDEX") == 0) {
         result = handleCreateIndex(normalized);
     }
+    else if (normalized.find("DROP TABLE") == 0) {
+    result = handleDropTable(query);
+    }
     else {
         result.success = false;
         result.message = "Unknown SQL statement";
     }
+    
 
     auto end = chrono::high_resolution_clock::now();
 
@@ -967,6 +971,41 @@ QueryResult QueryProcessor::handleCreateIndex(const string& query) {
 
     result.success = true;
     result.message = "Index created successfully";
+
+    return result;
+}
+
+QueryResult QueryProcessor::handleDropTable(const string& query) {
+    QueryResult result;
+
+    if (currentDatabase.empty()) {
+        result.success = false;
+        result.message = "No database selected";
+        return result;
+    }
+
+    vector<string> parts = split(query, ' ');
+
+    if (parts.size() < 3) {
+        result.success = false;
+        result.message = "Invalid DROP TABLE syntax";
+        return result;
+    }
+
+    string tableName = parts[2];
+
+    if (!tableName.empty() && tableName.back() == ';') {
+        tableName.pop_back();
+    }
+
+    if (!storage.dropTable(currentDatabase, tableName)) {
+        result.success = false;
+        result.message = "Table does not exist";
+        return result;
+    }
+
+    result.success = true;
+    result.message = "Table dropped successfully";
 
     return result;
 }

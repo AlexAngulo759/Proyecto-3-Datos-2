@@ -35,6 +35,7 @@ private:
     QueryResult handleUpdate(const std::string& query);
     QueryResult handleDelete(const std::string& query);
     QueryResult handleCreateIndex(const std::string& query);
+    QueryResult handleDropTable(const std::string& query);
 
     void quickSort(
         std::vector<std::vector<std::string>>& rows,
